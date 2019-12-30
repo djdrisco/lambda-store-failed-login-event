@@ -1,0 +1,21 @@
+{
+  "name": "lambda-store-failed-login-event",
+  "version": "1.0.0",
+  "description": "store failed login events",
+  "main": "handler.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "aws-sdk": "^2.579.0",
+    "pg": "^7.14.0"
+  },
+  "devDependencies": {
+    "chai": "^4.2.0",
+    "dotenv": "^8.2.0",
+    "mocha": "^6.2.2",
+    "serverless-offline": "^6.0.0-alpha.52"
+  }
+}
