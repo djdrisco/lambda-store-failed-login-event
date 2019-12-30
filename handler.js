@@ -81,12 +81,7 @@ module.exports.handler = async event => {
             if(userIdentity!==""){
 
 
-                var debugSqlInsert = true;
-
-                var queryInsert = "";
-
-                if(debugSqlInsert===false) {
-                    queryInsert =
+                var queryInsert =
                         'INSERT INTO public.cloudtrailevents(\n' +
                         'event_version, user_identity, event_time, event_source, event_name, aws_region,   \n' +
                         'source_ip_address, useragent, request_parameters, response_elements, \n' +
@@ -103,16 +98,7 @@ module.exports.handler = async event => {
                         '}\',' +
                         '\'null\',' + '\'99EXAMPLE-0c68-11e24e\',' + '\'null\',' + '\'cEXAMPLE-127ef-4634-980d-505a4EXAMPLE\',' + '\'ConsoleLogin\',' + '\'null\')'
 
-                }
-                else{
-                    queryInsert =
-                        'SELECT * FROM public.cloudtrailevents' ;
-                }
-
-
                 console.info("queryInsert: " + queryInsert);
-                
-
 
                 //const queryResult = await pool.query(queryInsert);
                 pool.query(queryInsert, (err, res) => {
@@ -139,25 +125,6 @@ module.exports.handler = async event => {
                 console.info("event.detail.userName undefined");
                 return {statusCode: 400};
             }
-
-
-
-            //query to insert bad logins
-
-
-            // const queryText = 'SELECT user_identity->\'userName\' as userName\n' +
-            //     '              FROM public.cloudtrailevents\n' +
-            //     '              WHERE response_elements->>\'ConsoleLogin\'=\'Failure\'\n' +
-            //     '              and user_identity->>\'userName\''+'=$1'+
-            //     '              GROUP BY userName\n' +
-            //     '              HAVING count(*) >= 3; ';
-            //
-            // const queryParams = ['david'];
-
-            //const queryResult = await pool.query(queryText, queryParams);
-
-
-
 
         }
         else{
