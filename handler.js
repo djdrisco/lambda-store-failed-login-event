@@ -53,9 +53,7 @@ module.exports.handler = async event => {
             const pool = new pg.Pool({user:jsonSecretValues.username, host:jsonSecretValues.host,
                 database:jsonSecretValues.dbname,password: jsonSecretValues.password, port:jsonSecretValues.port});
 
-            //TODO research why function is timing out
-
-
+         
 
             var userName = "";
 
