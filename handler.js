@@ -100,23 +100,16 @@ module.exports.handler = async event => {
 
                 console.info("queryInsert: " + queryInsert);
 
-                //const queryResult = await pool.query(queryInsert);
-                pool.query(queryInsert, (err, res) => {
-                    if(err){
-                        console.info('Error running query: ' + err);
-                    }
-                    else{
-                        console.info('QUERY EXECUTED SUCCESSFULLY');
-                    }
+             
+                await pool.query(queryInsert).then(queryResult=>{
+                    console.info('query completed successfully ');
+                })
+                    .catch(err=>{
+                        console.info('error: ' + err);
+                        return {statusCode: 400};
+                    });
 
-                    pool.end();
-                });
-                
-                //console.info("INSERT QUERY COMPLETE");
-
-                //console.info(queryResult.rows[0]);
-
-                //await pool.end();
+                await pool.end();
 
                 return {statusCode: 200};
 
