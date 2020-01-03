@@ -2,6 +2,33 @@
 var AWS = require('aws-sdk');
 var _ = require('underscore');
 
+
+function lambdaInvoke(lambda){
+    const params = {
+        ClientContext: "lambda-event-disable-account-dev",
+        FunctionName: "lambda-event-disable-account-dev-hello",
+        InvocationType: "Event",
+        LogType: "Tail"
+    };
+
+
+    return new Promise((resolve, reject)=> {
+
+        lambda.invoke(params, function(err,data){
+            if(err){
+                console.info(err,err.stack);
+                reject(err);
+            }
+            else{
+                console.info("lambda.invoke , data: "+data);
+                resolve(data);
+            }
+        });
+        }
+
+    )
+}
+
 module.exports.handler = async event => {
 
     console.log("ENVIRONMENT VARIABLES\n" + JSON.stringify(process.env, null, 2));
@@ -24,6 +51,8 @@ module.exports.handler = async event => {
     var iam = new AWS.IAM({apiVersion:'2010-05-08'});
 
     var secretsManager = new AWS.SecretsManager({apiVersion:'2017-10-17'});
+
+    var lambda = new AWS.Lambda({apiVersion: '2015-03-31'});
 
     // get UserName from CloudWatch event
     try{
@@ -161,6 +190,15 @@ module.exports.handler = async event => {
                     });
 
                 await pool.end();
+
+                //Call Disable Account Lambda Function
+                //To disable Account if number of incorrect logins > 3 in past 24 hours
+                await lambdaInvoke(lambda).then(data=>{
+                    console.info("lambda.invoke, data: " + data);
+                })
+                    .catch(err=>{
+                        console.info('error: ' + err);
+                    })
 
                 return {statusCode: 200};
 
