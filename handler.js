@@ -1,5 +1,6 @@
 'use strict';
 var AWS = require('aws-sdk');
+var _ = require('underscore');
 
 module.exports.handler = async event => {
 
@@ -9,7 +10,6 @@ module.exports.handler = async event => {
 
 
     var region = process.env.AWS_REGION_ENV;
-
 
     var secretName = process.env.RDS_POSTGRES_CONNECTION_AWS_SECRET_NAME;
 
@@ -47,22 +47,30 @@ module.exports.handler = async event => {
             //console.info("jsonSecretValues.password : " + jsonSecretValues.password);
             console.info("jsonSecretValues.port : " + jsonSecretValues.port);
 
-
-
-
             const pool = new pg.Pool({user:jsonSecretValues.username, host:jsonSecretValues.host,
                 database:jsonSecretValues.dbname,password: jsonSecretValues.password, port:jsonSecretValues.port});
 
          
-
+            var eventTime = "";
             var userName = "";
-
             var userIdentity ="";
+            var userAgent = "";
+            var eventSource = "";
+            var eventName = "";
+            var awsRegion = "";
+            var sourceIpAddress="";
+            var requestParameters="";
+            var responseElements="";
+            var resources = "";
+            var requestID = "";
+            var eventID ="";
+            var eventType ="";
 
             if(process.env.stage !== undefined && process.env.stage==="local_dev"){
 
                 //local testing
                    console.info("local dev environment");
+                   eventTime = '    NOW() ';
                    userName = process.env.userName;
                    userIdentity =   '\'{\"type\": \"IAMUser\",  \n' +
                        '  "principalId": "AIDACKCEVSQ6C2EXAMPLE",   \n' +
@@ -72,10 +80,58 @@ module.exports.handler = async event => {
                        ' "userName": "david"  \n'   +
                        ' }\'';
 
-            }else if(event.detail!==undefined&&event.detail.userIdentity!==undefined&&event.detail.userIdentity.userName!==undefined){
-                    console.info("event.detail.userName DEFINED, userName is: " + event.detail.userIdentity.userName);
-                     userName = event.detail.userIdentity.userName;
-                     userIdentity = JSON.stringify(event.detail.userIdentity);
+                   eventSource = '\'IAM\'';
+                   eventName = '\'ConsoleLogin\'';
+                   userAgent = '\'Desktop\'';
+                   awsRegion = '\'us-east-1\'';
+                   sourceIpAddress = '\'10.0.0.1\'';
+                   requestParameters = '\'null\'';
+                   responseElements = '\'{  ' +
+                       '\"ConsoleLogin\": \"Failure\" \n' +
+                       '}\''  ;
+                   resources = '\'null\'';
+                   requestID =  '\'null\'';
+                   eventID ='\'null\'';
+                   eventType = '\'AWSConsoleLogin\'';
+
+            }else if(event.detail!==undefined&&event.time!==undefined&&event.detail.userIdentity!==undefined&&event.detail.userIdentity.userName!==undefined &&
+               event.detail.userAgent !== undefined && event.detail.eventSource !== undefined &&
+               event.detail.eventName !== undefined && event.detail.awsRegion !== undefined &&
+               event.detail.sourceIPAddress !== undefined && event.detail.requestParameters !== undefined &&
+               event.detail.responseElements !== undefined && event.resources !== undefined &&
+               event.detail.eventID !== undefined && event.id !== undefined){
+                     console.info("event.detail.userName DEFINED, userName is: " + event.detail.userIdentity.userName);
+                     eventTime = '\'' + event.time + '\'';
+                     userName = '\'' + event.detail.userIdentity.userName + '\'';
+                     userIdentity = '\'' + JSON.stringify(event.detail.userIdentity) + '\'';
+                     userAgent = '\'' + event.detail.userAgent + '\'';
+                     eventSource = '\'' + event.detail.eventSource + '\'';
+                     eventName = '\'' + event.detail.eventName + '\'';
+                     awsRegion = '\'' + event.detail.awsRegion + '\'';
+                     sourceIpAddress = '\'' + event.detail.sourceIPAddress + '\'';
+                     if(event.detail.requestParameters === null) {
+                          console.info("event.detail.requestParameters is null") ;
+                          requestParameters =   '\'null\'';
+                     }
+                     else{
+                         console.info("event.detail.requestParameters is NOT null") ;
+                        requestParameters = '\'' + JSON.stringify(event.detail.requestParameters) + '\'';
+                     }
+                     
+                     responseElements = '\'' + JSON.stringify(event.detail.responseElements) + '\'';
+
+                     if(_.isEmpty(event.resources)){
+                         console.info('event.resources is empty');
+                         resources =   '\'null\'';
+                     }
+                     else{
+                         console.info('event.resources is NOT empty');
+                         resources = JSON.stringify(event.resources);
+                     }
+
+                     eventID = '\'' + event.detail.eventID + '\'';
+                     requestID = '\'' + event.id + '\'';
+                     eventType = '\'' + event.detail.eventType + '\'';
              }
 
             if(userIdentity!==""){
@@ -89,14 +145,9 @@ module.exports.handler = async event => {
                         'VALUES (\'1.05\', \n' +
                         userIdentity +
                         ',' +
-                        '    NOW(), \'IAM\', \'ConsoleLogin\', \'us-east-1\', \'10.0.0.0.1\', \'desktop\',    \n' +
-                        '\'{  \"userName\": \"JaneDoe\", \n' +
-                        ' \"policyName\": \"ReadOnlyAccess-JaneDoe-201407151307\" \n' +
-                        '}\',' +
-                        '\'{  ' +
-                        '\"ConsoleLogin\": \"Failure\" \n' +
-                        '}\',' +
-                        '\'null\',' + '\'99EXAMPLE-0c68-11e24e\',' + '\'null\',' + '\'cEXAMPLE-127ef-4634-980d-505a4EXAMPLE\',' + '\'ConsoleLogin\',' + '\'null\')'
+                        eventTime + ', ' +  eventSource + ',' + eventName + ',' + awsRegion +  ',' + sourceIpAddress + ',\n' +
+                        userAgent + ',' +  requestParameters + ','  +   responseElements + ',' +
+                        resources + ',' + requestID + ',' + '\'null\',' + eventID + ',' + eventType + ',' + '\'null\')'
 
                 console.info("queryInsert: " + queryInsert);
 
@@ -115,7 +166,7 @@ module.exports.handler = async event => {
 
             }
             else{
-                console.info("event.detail.userName undefined");
+                console.info("one of the event or event.detail properties undefined");
                 return {statusCode: 400};
             }
 

@@ -142,4 +142,4 @@ functions:
 #       Value: "Some output value"
 plugins:
   - serverless-offline
-  - serverless-puresec-cli
+
